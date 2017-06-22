@@ -670,19 +670,38 @@ class DataObject(object):
                         self._persistent.delete(key, must_exist=False, transaction=transaction)
 
             # Validate unique constraints
-            unique_key = 'ovs_unique_{0}_{{0}}_{{1}}'.format(self._classname)
+            def _validate_unique(properties, composite=False):
+                unique_key = 'ovs_unique_{0}_{{0}}_{{1}}'.format(self._classname)
+                keys_to_set = []
+                for index, unique_prop in enumerate(properties):
+                    if self._new is False and unique_prop.name in changed_fields:
+                        prop_key = unique_key.format(unique_prop.name, hashlib.sha1(str(store_data[unique_prop.name])).hexdigest())
+                        self._persistent.assert_value(prop_key, self._key, transaction=transaction)
+                        self._persistent.delete(prop_key, transaction=transaction)
+                    prop_key = unique_key.format(unique_prop.name, hashlib.sha1(str(self._data[unique_prop.name])).hexdigest())
+                    if self._new is True or unique_prop.name in changed_fields:
+                        self._persistent.assert_value(prop_key, None, transaction=transaction)
+                    if composite is True:
+                        keys_to_set.append(prop_key)
+                    else:
+                        self._persistent.set(prop_key, self._key, transaction=transaction)
+                # Uniqueness guaranteed when it got to here because of no assertions
+                for prop_key in keys_to_set:
+                    self._persistent.set(prop_key, self._key, transaction=transaction)
+
+            unique_props = []
+            composite_props = {}
             for prop in self._properties:
-                if prop.unique is True:
+                if prop.unique is True and isinstance(prop.unique, basestring):
                     if prop.property_type not in [str, int, float, long]:
                         raise RuntimeError('A unique constraint can only be set on field of type str, int, float, or long')
-                    if self._new is False and prop.name in changed_fields:
-                        key = unique_key.format(prop.name, hashlib.sha1(str(store_data[prop.name])).hexdigest())
-                        self._persistent.assert_value(key, self._key, transaction=transaction)
-                        self._persistent.delete(key, transaction=transaction)
-                    key = unique_key.format(prop.name, hashlib.sha1(str(self._data[prop.name])).hexdigest())
-                    if self._new is True or prop.name in changed_fields:
-                        self._persistent.assert_value(key, None, transaction=transaction)
-                    self._persistent.set(key, self._key, transaction=transaction)
+                    if prop.unique is True:
+                        unique_props.append(prop)
+                    else:
+                        composite_props[prop.unique] = composite_props.get(prop.unique, []) + [prop.unique]
+            _validate_unique(unique_props, False)
+            for composite_key, props in composite_props.iteritems():
+                _validate_unique(props, True)
 
             if _hook is not None:
                 _hook()

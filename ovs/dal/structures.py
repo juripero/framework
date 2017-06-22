@@ -42,7 +42,7 @@ class Relation(object):
     Relation
     """
 
-    def __init__(self, name, foreign_type, foreign_key, mandatory=True, onetoone=False, doc=None):
+    def __init__(self, name, foreign_type, foreign_key, mandatory=True, onetoone=False, doc=None, unique=False):
         """
         Initializes a relation
         """
@@ -51,6 +51,7 @@ class Relation(object):
         self.foreign_key = foreign_key
         self.mandatory = mandatory
         self.onetoone = onetoone
+        self.unique = unique
         self.docstring = doc
 
 
