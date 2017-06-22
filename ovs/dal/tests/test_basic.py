@@ -1506,15 +1506,20 @@ class Basic(unittest.TestCase):
         item2.another_item_id = 10
         with self.assertRaises(UniqueConstraintViolationException) as exception:
             item2.save()
-        disk1 = TestDisk()
-        disk1.name = 'disk1'
-        disk1.description = 'disk1'
-        disk1.save()  # Works, it's the first 'disk1'
-        disk2 = TestDisk()
-        disk2.name = 'disk1'
-        disk2.description = 'disk1'
-        with self.assertRaises(UniqueConstraintViolationException) as exception:
-            disk2.save()  # Fails, there's already a 'disk1'
+        item3 = TestItem()
+        item3.name = 'item3'
+        item3.other_item_id = 1
+        item3.another_item_id = 11
+        item3.save()
+        # disk1 = TestDisk()
+        # disk1.name = 'disk1'
+        # disk1.description = 'disk1'
+        # disk1.save()  # Works, it's the first 'disk1'
+        # disk2 = TestDisk()
+        # disk2.name = 'disk1'
+        # disk2.description = 'disk1'
+        # with self.assertRaises(UniqueConstraintViolationException) as exception:
+        #     disk2.save()  # Fails, there's already a 'disk1'
         # self.assertIn('TestDisk.name', exception.exception.message, '\TestDisk.name\' should be in exception message: {0}'.format(exception.exception.message))
         # disk2.name = 'disk2'
         # disk2.save()  # Works, it's the first 'disk2'

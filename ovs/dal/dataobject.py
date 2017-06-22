@@ -580,7 +580,7 @@ class DataObject(object):
                         elif self._datastore_wins is False:
                             # If the datastore should not win, we just overwrite the data
                             data[attribute] = self._data[attribute]
-                        # If the datastore should win, we discard/ignore our change
+                            # If the datastore should win, we discard/ignore our change
                     else:
                         # Normal scenario, saving data
                         data[attribute] = self._data[attribute]
@@ -670,8 +670,9 @@ class DataObject(object):
                         self._persistent.delete(key, must_exist=False, transaction=transaction)
 
             # Validate unique constraints
+            unique_key = 'ovs_unique_{0}_{{0}}_{{1}}'.format(self._classname)
+
             def _validate_unique(properties, composite=False):
-                unique_key = 'ovs_unique_{0}_{{0}}_{{1}}'.format(self._classname)
                 keys_to_set = []
                 for index, unique_prop in enumerate(properties):
                     if self._new is False and unique_prop.name in changed_fields:
@@ -692,13 +693,13 @@ class DataObject(object):
             unique_props = []
             composite_props = {}
             for prop in self._properties:
-                if prop.unique is True and isinstance(prop.unique, basestring):
+                if prop.unique is True or isinstance(prop.unique, basestring):
                     if prop.property_type not in [str, int, float, long]:
                         raise RuntimeError('A unique constraint can only be set on field of type str, int, float, or long')
                     if prop.unique is True:
                         unique_props.append(prop)
                     else:
-                        composite_props[prop.unique] = composite_props.get(prop.unique, []) + [prop.unique]
+                        composite_props[prop.unique] = composite_props.get(prop.unique, []) + [prop]
             _validate_unique(unique_props, False)
             for composite_key, props in composite_props.iteritems():
                 _validate_unique(props, True)
